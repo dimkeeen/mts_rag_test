@@ -97,7 +97,7 @@ if __name__ == "__main__":
     log.info("\n🚀 Тестирование гибридного ретривера...")
     hybrid_retriever = HybridRetriever(faiss_retriever, bm25_retriever)
 
-    query = "Как добавить датчик протечки?"
+    query = "как пополнить баланс мобильного?"
     relevant_docs = hybrid_retriever.get_relevant_documents(query)
 
     log.info("\n📌 Результаты гибридного поиска:")

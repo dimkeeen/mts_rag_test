@@ -39,7 +39,6 @@ hybrid_retriever = HybridRetriever(faiss_retriever, bm25_retriever)
 async def serve_ui(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-
 # === Обработка запроса ===
 @app.post("/ask")
 async def handle_query(query: str = Form(...)):
@@ -58,13 +57,13 @@ async def handle_query(query: str = Form(...)):
         prompt_template = """
 Ты онлайн ассистент по продуктам компании МТС.
 Ты помогаешь пользователям, вежливо и любезно отвечая на их вопросы на основе информации из базы знаний компании.
-Ответь на следующий вопрос в формате Markdown, используя предоставленную информацию:
+Ты не можешь оставлять ссылки на внешние ресурсы, кроме как на страницу поддержки МТС.
 
-{context}
+Ответь на следующий вопрос в формате Markdown, используя предоставленную информацию: {context}
 
 Вопрос: {query}
 
-Если релевантной информации не найдено — предложи перейти по ссылке "https://support.mts.ru/contacts".
+Если релевантной информации не найдено — предложи перейти по ссылке "https://support.mts.ru/contacts" для связи со службой поддержки.
 Если вопрос не относится к продуктам МТС — объясни, что ты консультируешь только по вопросам внутри экосистемы МТС.
 Отвечай на русском языке, структурировано и понятно.
 """
@@ -73,15 +72,16 @@ async def handle_query(query: str = Form(...)):
         answer = llm_chain.run({"context": context, "query": query})
         log.info("✅ Ответ сгенерирован")
 
-        # Подготовка релевантных документов как JSON
+        # Подготовка релевантных документов как JSON без изменения ссылок
         relevant_docs_json = [
             {
                 "page_content": doc.page_content,
-                "file_path": doc.metadata["file_path"]
+                "file_path": doc.metadata["file_path"]  # Ссылка остаётся неизменной
             }
             for doc in relevant_docs
         ]
 
+        # Возвращаем сгенерированный ответ и релевантные документы
         return JSONResponse(content={
             "answer": answer.strip(),
             "relevant_docs": json.dumps(relevant_docs_json, ensure_ascii=False)
@@ -93,7 +93,6 @@ async def handle_query(query: str = Form(...)):
             "answer": "Произошла ошибка при обработке запроса.",
             "relevant_docs": "[]"
         })
-
 
 # === Локальный запуск ===
 if __name__ == "__main__":
