@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>MTS AI Ассистент</title>
     <link rel="stylesheet" href="/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         .loading {
             display: inline-block;
@@ -16,13 +17,61 @@
             margin-left: 10px;
             vertical-align: middle;
         }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
         .loading-text {
             display: inline-block;
             margin-left: 10px;
             color: #0061af;
+        }
+
+        /* Markdown стиль */
+        #responseText {
+            color: var(--text-light);
+        }
+
+        #responseText h1,
+        #responseText h2,
+        #responseText h3,
+        #responseText p,
+        #responseText ul,
+        #responseText li,
+        #responseText a {
+            color: var(--text-light);
+        }
+
+        #responseText a {
+            text-decoration: underline;
+        }
+
+        /* Релевантные документы (список) */
+        details {
+            margin-top: 20px;
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        summary {
+            font-weight: bold;
+            color: var(--accent-red);
+            cursor: pointer;
+        }
+
+        .doc-item {
+            margin: 10px 0;
+        }
+
+        .doc-item a {
+            color: var(--text-light);
+            text-decoration: underline;
+        }
+
+        .doc-item:hover a {
+            color: var(--accent-red);
         }
     </style>
 </head>
@@ -42,8 +91,7 @@
         <!-- Блок для отображения ответа -->
         <div class="response" id="responseDiv" style="display: none;">
             <h3>Ответ:</h3>
-            <p id="responseText"></p>
-            <h4>Релевантные документы:</h4>
+            <div id="responseText"></div>
             <div id="relevantDocs"></div>
         </div>
     </div>
@@ -62,8 +110,30 @@
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('responseText').innerHTML = data.answer;
-                document.getElementById('relevantDocs').innerHTML = data.relevant_docs;
+                // Отображение Markdown-ответа
+                document.getElementById('responseText').innerHTML = marked.parse(data.answer);
+
+                // Рендер релевантных документов
+                const docs = JSON.parse(data.relevant_docs); // <-- это будет массив
+                if (docs.length > 0) {
+                    const details = document.createElement("details");
+                    const summary = document.createElement("summary");
+                    summary.textContent = "Может вы имели в виду?";
+                    details.appendChild(summary);
+
+                    docs.forEach(doc => {
+                        const div = document.createElement("div");
+                        div.className = "doc-item";
+                        div.innerHTML = `🔗 <a href="${doc.file_path}" target="_blank">${doc.page_content}</a>`;
+                        details.appendChild(div);
+                    });
+
+                    document.getElementById('relevantDocs').innerHTML = "";
+                    document.getElementById('relevantDocs').appendChild(details);
+                } else {
+                    document.getElementById('relevantDocs').innerHTML = "";
+                }
+
                 document.getElementById('loadingIndicator').style.display = 'none';
                 document.getElementById('responseDiv').style.display = 'block';
             })
