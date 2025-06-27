@@ -22,7 +22,7 @@ app = FastAPI()
 templates = Jinja2Templates(directory=".")
 
 # Подключение статики (CSS и HTML из корня)
-app.mount("/static", StaticFiles(directory=".", html=True), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # === Загрузка переменных окружения ===
 load_dotenv()
