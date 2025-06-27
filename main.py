@@ -7,8 +7,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
-from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+from langchain.prompts.chat import ChatPromptTemplate, HumanMessagePromptTemplate, SystemMessagePromptTemplate
 from langchain_openai import ChatOpenAI
 
 from hybrid_retriever import HybridRetriever, faiss_retriever, bm25_retriever
@@ -31,7 +31,7 @@ if not api_key:
     raise ValueError("OPENAI_API_KEY is required")
 
 # === Инициализация LLM и ретривера ===
-llm = ChatOpenAI(api_key=api_key, model="gpt-4o-mini", temperature=0.7, max_tokens=1000)
+llm = ChatOpenAI(api_key=api_key, model="gpt-4o-mini", temperature=0.3, max_tokens=1000)
 hybrid_retriever = HybridRetriever(faiss_retriever, bm25_retriever)
 
 # === Главная страница ===
@@ -47,41 +47,38 @@ async def handle_query(query: str = Form(...)):
         relevant_docs = hybrid_retriever.get_relevant_documents(query)
         log.info(f"🔍 Найдено документов: {len(relevant_docs)}")
 
-        # Формирование контекста
         context = "\n".join(
             f"Вопрос: {doc.page_content}\nОтвет: {doc.metadata['answer']}"
             for doc in relevant_docs
         )
 
-        # Промпт
-        prompt_template = """
-Ты онлайн ассистент по продуктам компании МТС.
-Ты помогаешь пользователям, вежливо и любезно отвечая на их вопросы на основе информации из базы знаний компании.
-Ты не можешь оставлять ссылки на внешние ресурсы, кроме как на страницу поддержки МТС.
+        # === Промпт через System + Human ===
+        prompt = ChatPromptTemplate.from_messages([
+            SystemMessagePromptTemplate.from_template(
+                "Ты ассистент по продуктам и услугам компании МТС. Отвечай только на вопросы, которые напрямую относятся к экосистеме МТС: мобильная связь, интернет, ТВ, умный дом, приложения, устройства и личный кабинет."
+                " Если вопрос не связан с продуктами МТС — ответь, что ты можешь помочь только по теме МТС и не специализурешься на других вопросах."
+                " Не придумывай информацию. Не отвечай на запросы вне своей области. Не пиши ссылки."
+                " Отвечай строго на русском языке, в формате Markdown."
+            ),
+            HumanMessagePromptTemplate.from_template(
+                "Вопрос: {query}\n\nКонтекст из базы знаний (если найден):\n{context}"
+            )
+        ])
 
-Ответь на следующий вопрос в формате Markdown, используя предоставленную информацию: {context}
-
-Вопрос: {query}
-
-Если релевантной информации не найдено — предложи перейти по ссылке "https://support.mts.ru/contacts" для связи со службой поддержки.
-Если вопрос не относится к продуктам МТС — объясни, что ты консультируешь только по вопросам внутри экосистемы МТС.
-Отвечай на русском языке, структурировано и понятно.
-"""
-        prompt = PromptTemplate(input_variables=["context", "query"], template=prompt_template)
         llm_chain = LLMChain(llm=llm, prompt=prompt)
         answer = llm_chain.run({"context": context, "query": query})
+
         log.info("✅ Ответ сгенерирован")
 
-        # Подготовка релевантных документов как JSON без изменения ссылок
+        # Подготовка релевантных документов (без изменения ссылок)
         relevant_docs_json = [
             {
                 "page_content": doc.page_content,
-                "file_path": doc.metadata["file_path"]  # Ссылка остаётся неизменной
+                "file_path": doc.metadata["file_path"]
             }
             for doc in relevant_docs
         ]
 
-        # Возвращаем сгенерированный ответ и релевантные документы
         return JSONResponse(content={
             "answer": answer.strip(),
             "relevant_docs": json.dumps(relevant_docs_json, ensure_ascii=False)
