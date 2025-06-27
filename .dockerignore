@@ -1,0 +1,3 @@
+# Docker ignore file
+__pycache__/
+.gitignore
