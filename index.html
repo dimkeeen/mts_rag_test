@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>MTS AI Ассистент</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 97, 175, 0.3);
+            border-radius: 50%;
+            border-top-color: #0061af;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            display: inline-block;
+            margin-left: 10px;
+            color: #0061af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 MTS AI Ассистент</h1>
+        <p>Задайте вопрос о продуктах и услугах МТС</p>
+        <form method="POST" id="queryForm">
+            <input type="text" name="query" id="queryInput" placeholder="Пример: Как подключить умный дом?" required>
+            <button type="submit">Получить ответ</button>
+            <div id="loadingIndicator" style="display: none; margin-top: 10px;">
+                <span class="loading"></span>
+                <span class="loading-text">Запрос обрабатывается...</span>
+            </div>
+        </form>
+
+        <!-- Блок для отображения ответа -->
+        <div class="response" id="responseDiv" style="display: none;">
+            <h3>Ответ:</h3>
+            <p id="responseText"></p>
+            <h4>Релевантные документы:</h4>
+            <div id="relevantDocs"></div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('#queryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('responseDiv').style.display = 'none';
+
+            const formData = new FormData(this);
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('responseText').innerHTML = data.answer;
+                document.getElementById('relevantDocs').innerHTML = data.relevant_docs;
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('responseDiv').style.display = 'block';
+            })
+            .catch(error => {
+                document.getElementById('loadingIndicator').style.display = 'none';
+                document.getElementById('responseDiv').style.display = 'block';
+                document.getElementById('responseText').textContent = 'Произошла ошибка: ' + error;
+            });
+        });
+    </script>
+</body>
+</html>

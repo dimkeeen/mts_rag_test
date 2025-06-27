@@ -1,0 +1,10 @@
+services:
+  mts_rag_app:
+    build: .
+    container_name: mts_rag_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}

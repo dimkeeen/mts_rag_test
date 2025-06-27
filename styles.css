@@ -1,0 +1,127 @@
+:root {
+  --dark-background: #181818;
+  --dark-card: #2b2b2b;
+  --text-light: #e0e0e0;
+  --text-dark: #333333;
+  --accent-red: #e74c3c;
+  --dark-red: #c0392b;
+  --hover-dark: #444;
+  --loading-border: #f39c12;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+body {
+  background-color: var(--dark-background);
+  color: var(--text-light);
+  line-height: 1.6;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--dark-card);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+  color: var(--accent-red);
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 28px;
+}
+
+form {
+  margin: 30px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input[type="text"] {
+  padding: 15px;
+  border: 2px solid #555;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: #333;
+  color: var(--text-light);
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent-red);
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+}
+
+button {
+  background-color: var(--accent-red);
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background-color: var(--dark-red);
+  transform: translateY(-2px);
+}
+
+.response-box {
+  margin-top: 30px;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #333;
+  border-left: 4px solid var(--accent-red);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.error-box {
+  background-color: #3c1a1a;
+  border-left-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(231, 76, 60, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--loading-border);
+  animation: spin 1s linear infinite;
+  margin-left: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+  }
+  
+  h1 {
+    font-size: 24px;
+  }
+}

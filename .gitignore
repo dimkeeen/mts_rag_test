@@ -1,0 +1,3 @@
+faiss_index/
+models/
+*.pkl
