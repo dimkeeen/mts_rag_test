@@ -3,6 +3,9 @@ uvicorn
 python-dotenv
 langchain
 langchain-openai
+langchain_community
 sentence-transformers
 faiss-cpu
 pandas
+rank_bm25
+python-multipart

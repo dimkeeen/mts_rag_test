@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import pickle
 import logging
 from typing import List
 
