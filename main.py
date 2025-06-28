@@ -21,17 +21,27 @@ log = logging.getLogger(__name__)
 app = FastAPI()
 templates = Jinja2Templates(directory=".")
 
-# Подключение статики (CSS и HTML из корня)
+# Подключение статики
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # === Загрузка переменных окружения ===
 load_dotenv()
+
 api_key = os.getenv("OPENAI_API_KEY")
+model_name = os.getenv("MODEL_NAME", "gpt-4o-mini")
+base_url = os.getenv("OPENAI_API_BASE_URL", "https://api.openai.com/v1")
+
 if not api_key:
     raise ValueError("OPENAI_API_KEY is required")
 
 # === Инициализация LLM и ретривера ===
-llm = ChatOpenAI(api_key=api_key, model="gpt-4o-mini", temperature=0.3, max_tokens=1000)
+llm = ChatOpenAI(
+    api_key=api_key,
+    base_url=base_url,
+    model=model_name,
+    temperature=0.3,
+    max_tokens=1000
+)
 hybrid_retriever = HybridRetriever(faiss_retriever, bm25_retriever)
 
 # === Главная страница ===
@@ -52,13 +62,12 @@ async def handle_query(query: str = Form(...)):
             for doc in relevant_docs
         )
 
-        # === Промпт через System + Human ===
+        # Промпт
         prompt = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(
                 "Ты ассистент по продуктам и услугам компании МТС. Отвечай только на вопросы, которые напрямую относятся к экосистеме МТС: мобильная связь, интернет, ТВ, умный дом, приложения, устройства и личный кабинет."
-                " Если вопрос не связан с продуктами МТС — ответь, что ты можешь помочь только по теме МТС и не специализурешься на других вопросах."
-                " Не придумывай информацию. Не отвечай на запросы вне своей области. Не пиши ссылки."
-                " Отвечай строго на русском языке, в формате Markdown."
+                " Если вопрос не связан с продуктами МТС — ответь, что ты можешь помочь только по теме МТС и не специализируешься на других вопросах."
+                " Не придумывай информацию. Не пиши ссылки. Отвечай строго на русском языке, в формате Markdown."
             ),
             HumanMessagePromptTemplate.from_template(
                 "Вопрос: {query}\n\nКонтекст из базы знаний (если найден):\n{context}"
@@ -70,7 +79,6 @@ async def handle_query(query: str = Form(...)):
 
         log.info("✅ Ответ сгенерирован")
 
-        # Подготовка релевантных документов (без изменения ссылок)
         relevant_docs_json = [
             {
                 "page_content": doc.page_content,
