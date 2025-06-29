@@ -6,6 +6,7 @@ python-dotenv
 langchain
 langchain-openai
 langchain_community
+langchain-huggingface
 sentence-transformers
 faiss-cpu
 pandas
